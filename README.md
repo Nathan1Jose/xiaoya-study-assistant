@@ -4,7 +4,7 @@
 [![License](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
 [![Version](https://img.shields.io/badge/version-1.2.0-orange)](xiaoya-study-assistant.user.js)
 
-> 小雅智能教学平台（ai-augmented.com）自动化刷课 Tampermonkey 油猴脚本。
+> 小雅智能教学平台（ai-augmented.com）自动化刷课  | Tampermonkey 油猴无脑安装。
 >
 > 支持ccnu , whut等所有使用小雅平台的高校。
 

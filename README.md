@@ -1,4 +1,4 @@
-# 小雅·师说 刷课助手 (XiaoYa Study Assistant)
+# 小雅刷课助手 (XiaoYa Study Assistant)
 
 [![Tampermonkey](https://img.shields.io/badge/Tampermonkey-✓-brightgreen)](https://www.tampermonkey.net/)
 [![License](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
@@ -6,7 +6,7 @@
 
 > 小雅智能教学平台（ai-augmented.com）自动化刷课 Tampermonkey 油猴脚本。
 >
-> 支持华中师范大学、武汉理工大学、南开大学等所有使用小雅平台的高校。
+> 支持ccnu , whut等所有使用小雅平台的高校。
 
 ## ✨ 功能
 

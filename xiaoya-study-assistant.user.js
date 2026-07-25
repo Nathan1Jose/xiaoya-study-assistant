@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         小雅·师说 刷课助手
 // @namespace    https://github.com/Nathan1Jose/xiaoya-study-assistant
-// @version      1.2.0
+// @version      1.2.1
 // @description  小雅智能教学平台自动化刷课脚本 - 自动播放视频、支持倍速、自动切集、防离开暂停、自动遍历文件夹，通用适配所有课程
 // @author       Nathan1Jose
 // @license      MIT
@@ -507,27 +507,46 @@
             await Utils.sleep(CONFIG.autoPlayDelay);
 
             // 检测当前所处位置
+            const path = Utils.getPathParts();
             const pos = Utils.getCurrentPosition();
+
             if (pos) {
-                // 已经在某个视频页面
+                // 情况1: 已在某个视频页面 → 直接播放
                 State.currentFolderIndex = pos.folderIndex;
                 State.currentVideoIndex = pos.videoIndex;
                 console.log(`[小雅刷课] 📍 当前位置: ${COURSE_DATA.folders[pos.folderIndex].name} > ${COURSE_DATA.folders[pos.folderIndex].videos[pos.videoIndex].name}`);
                 State.panel?.updateFolderInfo(pos.folderIndex, pos.videoIndex);
                 await this.playCurrentVideo();
+
+            } else if (path && path.folderId && !path.resourceId) {
+                // 情况2: 在文件夹视图（有 folderId 但没有 resourceId）
+                // 找到当前文件夹在 COURSE_DATA 中的索引
+                const folderIdx = COURSE_DATA.folders.findIndex(f => f.id === path.folderId);
+                if (folderIdx >= 0 && COURSE_DATA.folders[folderIdx].videos.length > 0) {
+                    // 从当前文件夹的第一个视频开始
+                    console.log(`[小雅刷课] 📂 从当前文件夹开始: ${COURSE_DATA.folders[folderIdx].name}`);
+                    State.panel?.updateStatus(`📂 ${COURSE_DATA.folders[folderIdx].name}`);
+                    this.goToVideo(folderIdx, 0);
+                } else {
+                    // 当前文件夹无视频，找下一个有视频的文件夹
+                    console.log('[小雅刷课] 📂 当前文件夹无视频，查找下一个');
+                    await this.findAndGoToNextVideo(0);
+                }
+
             } else {
-                // 不在视频页面 - 尝试进入第一个未完成的文件夹
-                console.log('[小雅刷课] 📍 不在视频页面，尝试定位到第一个视频');
+                // 情况3: 在根目录或其他视图
+                console.log('[小雅刷课] 📍 在根目录视图');
+
+                // 先检查是否有保存的进度
                 const saved = this.getProgress();
                 if (saved) {
-                    // 继续之前的进度
                     State.currentFolderIndex = saved.folderIndex;
                     State.currentVideoIndex = saved.videoIndex;
                     console.log(`[小雅刷课] 🔄 恢复进度: ${COURSE_DATA.folders[saved.folderIndex].name} > ${COURSE_DATA.folders[saved.folderIndex].videos[saved.videoIndex].name}`);
                     this.goToVideo(saved.folderIndex, saved.videoIndex);
                 } else {
-                    // 从最开始
-                    this.goToVideo(0, 0);
+                    // 从第一个有视频的文件夹开始
+                    await this.findAndGoToNextVideo(0);
                 }
             }
         },
@@ -714,6 +733,21 @@
             State.currentFolderIndex = folderIndex;
             State.currentVideoIndex = videoIndex;
             Utils.navigateToVideo(folder.id, folder.videos[videoIndex].id);
+        },
+
+        /** 找到下一个有视频的文件夹并跳转 */
+        async findAndGoToNextVideo(startIndex) {
+            for (let i = startIndex; i < COURSE_DATA.folders.length; i++) {
+                if (COURSE_DATA.folders[i].videos.length > 0) {
+                    console.log(`[小雅刷课] 📂 跳转到: ${COURSE_DATA.folders[i].name}`);
+                    this.goToVideo(i, 0);
+                    return;
+                }
+            }
+            // 所有文件夹都无视频
+            console.log('[小雅刷课] ❌ 未找到任何视频');
+            State.panel?.updateStatus('❌ 未找到视频');
+            State.running = false;
         },
 
         /** 保存进度 */
